@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyecto Vue3 Vuetify3</title>
+  <!-- Vuetify 3 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.6.14/dist/vuetify.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.6.14/dist/vuetify.min.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+
+  <div id="app">
+    <v-app>
+      <v-container>
+        <v-toolbar flat>
+          <v-toolbar-title>Auditoría de pacientes</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn color="primary" @click="abrirModalCrearAuditoria" dark>Crear Auditoría de paciente</v-btn>
+        </v-toolbar>
+
+        <!-- Tabla de Auditoría de pacientes -->
+        <v-data-table :headers="headers" :items="auditoriaPacientes" item-value="name" class="elevation-1">
+          <template v-slot:item.actions="{ item }">
+            <!-- Botón para agregar observación -->
+            <v-btn text icon color="green" @click="abrirModalCrearObservacion(item)">
+              <v-icon>post_add</v-icon>
+            </v-btn>
+
+            <!-- Botón para ver observaciones -->
+            <v-btn text icon color="blue" @click="abrirModalVerObservaciones(item)">
+              <v-icon>note_add</v-icon>
+            </v-btn>
+
+            <!-- Botón para cerrar auditoría, deshabilitado si el estado es 2 -->
+            <v-btn text icon color="red" @click="abrirModalCerrarAuditoria(item)" :disabled="item.estado === 2">
+              <v-icon>check</v-icon>
+            </v-btn>
+          </template>
+        </v-data-table>
+
+        <!-- Modal Crear Auditoría -->
+        <v-dialog v-model="dialogCrearAuditoria" max-width="800px">
+          <v-card>
+            <v-card-title>
+              <span class="headline">Crear Auditoría</span>
+            </v-card-title>
+            <v-card-text>
+              <v-form>
+                <v-row>
+                  <v-col cols="12" md="3">
+                    <v-text-field label="Número Documento" v-model="nuevoPaciente.numeroDocumento"></v-text-field>
+                  </v-col>
+                  <v-col cols="12" md="3">
+                    <v-text-field label="Tipo Documento" v-model="nuevoPaciente.tipoDocumento"></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-form>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="dialogCrearAuditoria = false">Cancelar</v-btn>
+              <v-btn color="blue darken-1" text @click="submitForm">Guardar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Modal Ver Observaciones -->
+        <v-dialog v-model="dialogVerObservaciones" max-width="600px">
+          <v-card>
+            <v-card-title>
+              <span class="headline">Ver Observaciones</span>
+            </v-card-title>
+            <v-card-text>
+              <div v-if="pacienteSeleccionado">
+                <p>Observaciones del paciente {{ pacienteSeleccionado.nombresApellidos }}</p>
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="dialogVerObservaciones = false">Cerrar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Modal Crear Observación -->
+        <v-dialog v-model="dialogCrearObservacion" max-width="600px">
+          <v-card>
+            <v-card-title>
+              <span class="headline">Agregar Observación</span>
+            </v-card-title>
+            <v-card-text>
+              <div v-if="pacienteSeleccionado">
+                <p>Agregar observación para {{ pacienteSeleccionado.nombresApellidos }}</p>
+                <v-text-field label="Observación" v-model="nuevaObservacion"></v-text-field>
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="dialogCrearObservacion = false">Cancelar</v-btn>
+              <v-btn color="green darken-1" text @click="agregarObservacion">Guardar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+        <!-- Modal Cerrar Auditoría -->
+        <v-dialog v-model="dialogCerrarAuditoria" max-width="600px">
+          <v-card>
+            <v-card-title>
+              <span class="headline">Cerrar Auditoría</span>
+            </v-card-title>
+            <v-card-text>
+              <div v-if="pacienteSeleccionado">
+                <p>¿Está seguro que desea cerrar la auditoría del paciente {{ pacienteSeleccionado.nombresApellidos }}?</p>
+              </div>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn color="blue darken-1" text @click="dialogCerrarAuditoria = false">Cancelar</v-btn>
+              <v-btn color="red darken-1" text @click="cerrarAuditoria">Confirmar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+
+      </v-container>
+    </v-app>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    const { createApp } = Vue;
+    const { createVuetify } = Vuetify;
+
+    const store = Vuex.createStore({
+      state() {
+        return {
+          auditoriaPacientes: [
+            {
+              numeroDocumento: '12345678',
+              tipoDocumento: 'CC',
+              nombresApellidos: 'Juan Pérez',
+              sexo: 'Masculino',
+              edad: 45,
+              municipioResidencia: 'Bogotá',
+              cohorte: 'SI',
+              ipsAsignada: 'IPS SaludTotal'
+            },
+            {
+              numeroDocumento: '87654321',
+              tipoDocumento: 'CC',
+              nombresApellidos: 'María García',
+              sexo: 'Femenino',
+              edad: 39,
+              municipioResidencia: 'Medellín',
+              cohorte: 'NO',
+              ipsAsignada: 'IPS Sura'
+            }
+          ],
+          nuevoPaciente: {
+            numeroDocumento: '',
+            tipoDocumento: ''
+          }
+        };
+      },
+      mutations: {
+        CREAR_AUDITORIA(state, paciente) {
+          state.auditoriaPacientes.push(paciente);
+        }
+      },
+      actions: {
+        crearAuditoria({ commit, state }) {
+          commit('CREAR_AUDITORIA', { ...state.nuevoPaciente });
+          state.nuevoPaciente.numeroDocumento = '';
+          state.nuevoPaciente.tipoDocumento = '';
+        }
+      },
+      getters: {
+        auditoriaPacientes: (state) => state.auditoriaPacientes,
+        nuevoPaciente: (state) => state.nuevoPaciente
+      }
+    });
+
+    const app = createApp({
+      data() {
+        return {
+          dialogCrearAuditoria: false,
+          dialogVerObservaciones: false,
+          dialogCerrarAuditoria: false,
+          dialogCrearObservacion: false,
+          pacienteSeleccionado: null,
+          nuevaObservacion: '',
+          headers: [
+            { text: 'Número Documento', value: 'numeroDocumento' },
+            { text: 'Tipo Documento', value: 'tipoDocumento' },
+            { text: 'Nombres y Apellidos', value: 'nombresApellidos' },
+            { text: 'Sexo', value: 'sexo' },
+            { text: 'Edad', value: 'edad' },
+            { text: 'Municipio Residencia', value: 'municipioResidencia' },
+            { text: 'Cohorte', value: 'cohorte' },
+            { text: 'IPS Asignada', value: 'ipsAsignada' },
+            { text: 'Acciones', value: 'actions', sortable: false }
+          ]
+        };
+      },
+      computed: {
+        auditoriaPacientes() {
+          return this.$store.getters.auditoriaPacientes;
+        }
+      },
+      methods: {
+        abrirModalCrearAuditoria() {
+          this.dialogCrearAuditoria = true;
+        },
+        abrirModalCrearObservacion(item) {
+          this.pacienteSeleccionado = item;
+          this.dialogCrearObservacion = true;
+        },
+        abrirModalVerObservaciones(item) {
+          this.pacienteSeleccionado = item;
+          this.dialogVerObservaciones = true;
+        },
+        abrirModalCerrarAuditoria(item) {
+          this.pacienteSeleccionado = item;
+          this.dialogCerrarAuditoria = true;
+        },
+        agregarObservacion() {
+          this.pacienteSeleccionado.observaciones.push(this.nuevaObservacion);
+          this.nuevaObservacion = '';
+          this.dialogCrearObservacion = false;
+        },
+        cerrarAuditoria() {
+          this.pacienteSeleccionado.estado = 2; // Marcando como cerrada
+          this.dialogCerrarAuditoria = false;
+        },
+        submitForm() {
+          this.$store.dispatch('crearAuditoria');
+          this.dialogCrearAuditoria = false;
+        }
+      }
+    });
+
+    const vuetify = createVuetify();
+
+    app.use(vuetify);
+    app.use(store);
+    app.mount('#app');
+  </script>
+
+</body>
+
+</html>
