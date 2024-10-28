@@ -23,8 +23,8 @@
          window.onload = function() {
              fetch('https://www.refactorii.com/get-visit-count')
             .then(response => response.json())
-            .then(data => {
-                document.getElementById('visit-count').innerText = `Total de visitas: ${data.visitCount}`;
+            .then(data => {  console.log(data)
+               //document.getElementById('visit-count').innerText = `Total de visitas: ${data.visitCount}`;
             })
             .catch(error => {
                 console.error('Error al obtener contador de visitas:', error);
