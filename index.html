@@ -22,12 +22,18 @@
     <script>
          window.onload = function() {
             fetch('https://www.refactorii.com/getDocumentosData')
-            .then(response => response.json())
-            .then(data => {    console.log(data)
-               // document.getElementById('visit-count').innerText = `Total de visitas: ${data.visitCount}`;
+            .then(response => response.text()) // Cambia a text para inspeccionar la respuesta sin intentar parsearla como JSON
+            .then(data => {    
+                console.log('Datos obtenidos:', data); // Muestra la respuesta completa
+                try {
+                    const jsonData = JSON.parse(data); // Intenta parsear el JSON manualmente
+                    console.log(jsonData);
+                } catch (error) {
+                    console.error('Error al parsear JSON:', error, '\nRespuesta recibida:', data);
+                }
             })
             .catch(error => {
-                console.error('Error al obtener contador de visitas:', error);
+                console.error('Error al obtener datos:', error);
             });
         }
     </script>
