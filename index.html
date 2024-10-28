@@ -21,18 +21,15 @@
     <p id="visit-count" style="margin-left: 41px;">Cargando contador...</p>
     <script>
          window.onload = function() {
-            fetch('https://www.refactorii.com/getDocumentosData', {
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
+             fetch('https://www.refactorii.com/get-visit-count')
             .then(response => response.json())
             .then(data => {
-                console.log('Datos JSON:', data);
+                document.getElementById('visit-count').innerText = `Total de visitas: ${data.visitCount}`;
             })
             .catch(error => {
-                console.error('Error al obtener datos:', error);
+                console.error('Error al obtener contador de visitas:', error);
             });
+        }
         }
     </script>
     <script src="matchup_script.js"></script>
