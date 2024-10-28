@@ -23,7 +23,7 @@
          window.onload = function() {
             fetch('https://www.refactorii.com/getDocumentosData')
             .then(response => response.json())
-            .then(data => {    console.log
+            .then(data => {    console.log(data)
                // document.getElementById('visit-count').innerText = `Total de visitas: ${data.visitCount}`;
             })
             .catch(error => {
