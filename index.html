@@ -21,16 +21,14 @@
     <p id="visit-count" style="margin-left: 41px;">Cargando contador...</p>
     <script>
          window.onload = function() {
-            fetch('https://www.refactorii.com/getDocumentosData')
-            .then(response => response.text()) // Cambia a text para inspeccionar la respuesta sin intentar parsearla como JSON
-            .then(data => {    
-                console.log('Datos obtenidos:', data); // Muestra la respuesta completa
-                try {
-                    const jsonData = JSON.parse(data); // Intenta parsear el JSON manualmente
-                    console.log(jsonData);
-                } catch (error) {
-                    console.error('Error al parsear JSON:', error, '\nRespuesta recibida:', data);
+            fetch('https://www.refactorii.com/getDocumentosData', {
+                headers: {
+                    'Accept': 'application/json'
                 }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Datos JSON:', data);
             })
             .catch(error => {
                 console.error('Error al obtener datos:', error);
