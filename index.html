@@ -21,21 +21,6 @@
     <p id="visit-count" style="margin-left: 41px;">Cargando contador...</p>
     <script>
           window.onload = function() {
-            fetch('https://www.refactorii.com/increment-visit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data.message);
-                // Mostrar el número total de visitas
-                document.getElementById('visit-count').innerText = `Total de visitas: ${data.visitCount}`;
-            })
-            .catch(error => {
-                console.error('Error al incrementar visita:', error);
-            });
 
         fetch('https://www.refactorii.com/get-visit-count')
             .then(response => response.json())
