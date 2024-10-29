@@ -10,46 +10,80 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
   <!-- Vuex CDN -->
   <script src="https://cdn.jsdelivr.net/npm/vuex@3.6.2/dist/vuex.js"></script>
-  <!-- Axios CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-
 <div id="app">
   <v-app>
     <v-container>
       <v-toolbar flat>
-        <v-toolbar-title>Auditoría de pacientes</v-toolbar-title>
+        <v-toolbar-title>Auditoría de Documentos</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn color="primary" @click="abrirModalCrearAuditoria" dark>Crear Auditoría de paciente</v-btn>
+        <v-btn color="primary" @click="abrirModalCrearDocumento" dark>Crear Documento</v-btn>
       </v-toolbar>
 
-      <!-- Tabla de Auditoría de pacientes -->
+      <!-- Tabla de Documentos -->
       <v-data-table
         :headers="headers"
-        :items="auditoriaPacientes"
-        item-value="name"
+        :items="documentos"
+        item-value="folio"
         class="elevation-1"
       >
         <template v-slot:item.actions="{ item }">
-          <!-- Botón para agregar observación -->
-          <v-btn text icon color="green" @click="abrirModalCrearObservacion(item)">
-            <v-icon>post_add</v-icon>
+          <!-- Botón para ver detalles del documento -->
+          <v-btn text icon color="blue" @click="abrirModalVerDetalles(item)">
+            <v-icon>info</v-icon>
           </v-btn>
-          <!-- Botón para ver observaciones -->
-          <v-btn text icon color="blue" @click="abrirModalVerObservaciones(item)">
-            <v-icon>note_add</v-icon>
-          </v-btn>
-          <!-- Botón para cerrar auditoría, deshabilitado si el estado es 2 -->
-          <v-btn text icon color="red" @click="abrirModalCerrarAuditoria(item)" :disabled="item.estado === 2">
-            <v-icon>check</v-icon>
+          <!-- Botón para editar el documento -->
+          <v-btn text icon color="green" @click="abrirModalEditarDocumento(item)">
+            <v-icon>edit</v-icon>
           </v-btn>
         </template>
       </v-data-table>
 
-      <!-- Modales para Crear Auditoría, Ver Observaciones, Crear Observación y Cerrar Auditoría -->
-      <!-- Aquí se incluyen los modales según el diseño que compartiste antes -->
+      <!-- Modal Crear Documento -->
+      <v-dialog v-model="dialogCrearDocumento" max-width="800px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Crear Documento</span>
+          </v-card-title>
+          <v-card-text>
+            <v-form>
+              <v-row>
+                <!-- Campos de entrada para los datos del documento -->
+                <v-col cols="12" md="3">
+                  <v-text-field label="Tipo Documento" v-model="nuevoDocumento.tipoDocumento"></v-text-field>
+                </v-col>
+                <!-- Añadir más campos según se necesite -->
+              </v-row>
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="dialogCrearDocumento = false">Cancelar</v-btn>
+            <v-btn color="blue darken-1" text @click="submitForm">Guardar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal Ver Detalles -->
+      <v-dialog v-model="dialogVerDetalles" max-width="600px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Detalles del Documento</span>
+          </v-card-title>
+          <v-card-text>
+            <div v-if="documentoSeleccionado">
+              <p><strong>Tipo Documento:</strong> {{ documentoSeleccionado.tipoDocumento }}</p>
+              <!-- Muestra más detalles aquí -->
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="dialogVerDetalles = false">Cerrar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
     </v-container>
   </v-app>
@@ -61,121 +95,131 @@
   // Configuración de Vuex Store
   const store = new Vuex.Store({
     state: {
-      auditoriaPacientes: [], // Almacenará los datos obtenidos desde el endpoint
-      nuevoPaciente: {
-        numeroDocumento: '',
-        tipoDocumento: ''
-      }
+      documentos: [
+        // Ejemplo de documento inicial
+        {
+          tipoDocumento: 'Factura',
+          cufeCude: 'CUFE123456789',
+          folio: '12345',
+          prefijo: 'F',
+          fechaEmision: '2024-01-01',
+          fechaRecepcion: '2024-01-02',
+          nitEmisor: '123456789',
+          nombreEmisor: 'Empresa S.A.S.',
+          nitReceptor: '987654321',
+          nombreReceptor: 'Cliente S.A.S.',
+          iva: 19,
+          ica: 5,
+          ipc: 3,
+          total: 100000,
+          estado: 'Pendiente',
+          grupo: 'Grupo A'
+        },
+        // Más documentos si es necesario
+      ],
+      nuevoDocumento: {
+        tipoDocumento: '',
+        cufeCude: '',
+        folio: '',
+        prefijo: '',
+        fechaEmision: '',
+        fechaRecepcion: '',
+        nitEmisor: '',
+        nombreEmisor: '',
+        nitReceptor: '',
+        nombreReceptor: '',
+        iva: 0,
+        ica: 0,
+        ipc: 0,
+        total: 0,
+        estado: '',
+        grupo: ''
+      },
+      documentoSeleccionado: null,
+      dialogCrearDocumento: false,
+      dialogVerDetalles: false,
     },
     mutations: {
-      SET_AUDITORIA_PACIENTES(state, pacientes) {
-        state.auditoriaPacientes = pacientes;
+      agregarDocumento(state, documento) {
+        state.documentos.push(documento);
       },
-      CREAR_AUDITORIA(state, paciente) {
-        state.auditoriaPacientes.push(paciente);
+      seleccionarDocumento(state, documento) {
+        state.documentoSeleccionado = documento;
+      },
+      limpiarNuevoDocumento(state) {
+        Object.keys(state.nuevoDocumento).forEach(key => {
+          state.nuevoDocumento[key] = '';
+        });
       }
     },
     actions: {
-      async fetchAuditoriaPacientes({ commit }) {
-        try {
-          const response = await axios.post('/getDocumentosData');
-          const pacientes = response.data.documentos.map(doc => ({
-            numeroDocumento: doc.cufeCude,
-            tipoDocumento: doc.tipoDocumento,
-            nombresApellidos: `${doc.nombreEmisor} ${doc.nombreReceptor}`,
-            sexo: '', // Ajusta este y otros campos según sea necesario
-            edad: '', // Si hay datos adicionales para calcular la edad, los puedes incluir aquí
-            municipioResidencia: '',
-            cohorte: doc.grupo,
-            ipsAsignada: doc.nombreReceptor
-          }));
-          commit('SET_AUDITORIA_PACIENTES', pacientes);
-        } catch (error) {
-          console.error('Error al obtener datos:', error);
-        }
-      },
-      crearAuditoria({ commit, state }) {
-        commit('CREAR_AUDITORIA', { ...state.nuevoPaciente });
-        state.nuevoPaciente.numeroDocumento = '';
-        state.nuevoPaciente.tipoDocumento = '';
+      agregarDocumento({ commit, state }) {
+        commit('agregarDocumento', { ...state.nuevoDocumento });
+        commit('limpiarNuevoDocumento');
       }
     },
     getters: {
-      auditoriaPacientes: (state) => state.auditoriaPacientes,
-      nuevoPaciente: (state) => state.nuevoPaciente
+      documentos: state => state.documentos,
+      nuevoDocumento: state => state.nuevoDocumento,
+      documentoSeleccionado: state => state.documentoSeleccionado,
     }
   });
 
-  // Inicialización de Vue con Vuex y Vuetify
+  // Crear la instancia de Vue
   new Vue({
     el: '#app',
     vuetify: new Vuetify(),
-    store, // Vuex Store
+    store,
     computed: {
-      auditoriaPacientes() {
-        return this.$store.getters.auditoriaPacientes;
+      documentos() {
+        return this.$store.getters.documentos;
       },
-      nuevoPaciente() {
-        return this.$store.state.nuevoPaciente;
-      }
-    },
-    data() {
-      return {
-        dialogCrearAuditoria: false,
-        dialogVerObservaciones: false,
-        dialogCerrarAuditoria: false,
-        dialogCrearObservacion: false,
-        pacienteSeleccionado: null,
-        nuevaObservacion: '',
-        headers: [
-          { text: 'Número Documento', value: 'numeroDocumento' },
+      headers() {
+        return [
           { text: 'Tipo Documento', value: 'tipoDocumento' },
-          { text: 'Nombres y Apellidos', value: 'nombresApellidos' },
-          { text: 'Sexo', value: 'sexo' },
-          { text: 'Edad', value: 'edad' },
-          { text: 'Municipio Residencia', value: 'municipioResidencia' },
-          { text: 'Cohorte', value: 'cohorte' },
-          { text: 'IPS Asignada', value: 'ipsAsignada' },
+          { text: 'CUFE/CUDE', value: 'cufeCude' },
+          { text: 'Folio', value: 'folio' },
+          { text: 'Prefijo', value: 'prefijo' },
+          { text: 'Fecha Emisión', value: 'fechaEmision' },
+          { text: 'Fecha Recepción', value: 'fechaRecepcion' },
+          { text: 'NIT Emisor', value: 'nitEmisor' },
+          { text: 'Nombre Emisor', value: 'nombreEmisor' },
+          { text: 'NIT Receptor', value: 'nitReceptor' },
+          { text: 'Nombre Receptor', value: 'nombreReceptor' },
+          { text: 'IVA', value: 'iva' },
+          { text: 'ICA', value: 'ica' },
+          { text: 'IPC', value: 'ipc' },
+          { text: 'Total', value: 'total' },
+          { text: 'Estado', value: 'estado' },
+          { text: 'Grupo', value: 'grupo' },
           { text: 'Acciones', value: 'actions', sortable: false },
-        ]
-      };
+        ];
+      },
+      nuevoDocumento() {
+        return this.$store.getters.nuevoDocumento;
+      },
+      documentoSeleccionado() {
+        return this.$store.getters.documentoSeleccionado;
+      },
     },
     methods: {
-      abrirModalCrearAuditoria() {
-        this.dialogCrearAuditoria = true;
+      abrirModalCrearDocumento() {
+        this.$store.commit('limpiarNuevoDocumento');
+        this.dialogCrearDocumento = true;
       },
       submitForm() {
-        this.$store.dispatch('crearAuditoria');
-        this.dialogCrearAuditoria = false;
+        this.$store.dispatch('agregarDocumento');
+        this.dialogCrearDocumento = false;
       },
-      abrirModalCrearObservacion(item) {
-        this.pacienteSeleccionado = item;
-        this.dialogCrearObservacion = true;
+      abrirModalVerDetalles(item) {
+        this.$store.commit('seleccionarDocumento', item);
+        this.dialogVerDetalles = true;
       },
-      agregarObservacion() {
-        console.log('Agregando observación:', this.nuevaObservacion, 'para el paciente', this.pacienteSeleccionado);
-        this.nuevaObservacion = '';
-        this.dialogCrearObservacion = false;
-      },
-      abrirModalVerObservaciones(item) {
-        this.pacienteSeleccionado = item;
-        this.dialogVerObservaciones = true;
-      },
-      abrirModalCerrarAuditoria(item) {
-        this.pacienteSeleccionado = item;
-        this.dialogCerrarAuditoria = true;
-      },
-      cerrarAuditoria() {
-        console.log('Cerrando auditoría para:', this.pacienteSeleccionado);
-        this.dialogCerrarAuditoria = false;
+      abrirModalEditarDocumento(item) {
+        // Aquí puedes implementar la lógica para editar el documento
       }
-    },
-    created() {
-      // Cargar los datos desde el endpoint al iniciar la app
-      this.$store.dispatch('fetchAuditoriaPacientes');
     }
   });
 </script>
-
 </body>
 </html>
