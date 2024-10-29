@@ -61,42 +61,28 @@
   </style>
 </head>
 <body>
-  <div class="background"></div> <!-- Fondo difuminado -->
-
+  <div class="background"></div> 
   <div class="login-container">
     <h1>Bienvenido a Reportes GSG</h1>
-    <!-- Botón de inicio de sesión de Google -->
-    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google Logo" width="20">
     <a href="#register">
 		<!-- Google Sign-In -->
 		<div id="g_id_onload"
-			 data-client_id="980822676255-vntch0t28qbesul2bp5oc1galtoi8a97.apps.googleusercontent.com"
-			 data-callback="handleCredentialResponse"
-			 data-context="use"
-			 data-ux_mode="popup"
-			 data-auto_select="true"
-			 data-itp_support="true">
+			data-client_id="980822676255-vntch0t28qbesul2bp5oc1galtoi8a97.apps.googleusercontent.com"
+			data-callback="handleCredentialResponse"
+			data-context="use"
+			data-ux_mode="popup"
+			data-auto_select="true"
+			data-itp_support="true">
 		</div>
 		<div class="g_id_signin"
-			 data-type="standard"
-			 data-shape="rectangular"
-			 data-theme="outline"
-			 data-text="signin_with"
-			 data-size="large"
-			 data-logo_alignment="left">
+			data-type="standard"
+			data-shape="rectangular"
+			data-theme="outline"
+			data-text="signin_with"
+			data-size="large"
+			data-logo_alignment="left">
 		</div>
         </a>
   </div>
-
-  <!-- SDK de Google Sign-In -->
-  <script src="https://apis.google.com/js/platform.js" async defer></script>
-  <script>
-    function signInWithGoogle() {
-      // Aquí se añadiría la lógica para Google Sign-In, dependiendo de la configuración de OAuth en Google Developers Console.
-      console.log("Iniciar sesión con Google...");
-      // Puedes personalizar esta función para manejar la autenticación con tu backend.
-    }
-  </script>
-
 </body>
 </html>
