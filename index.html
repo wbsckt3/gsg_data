@@ -140,64 +140,66 @@ const store = new Vuex.Store({
   }
 });
   
-  // Crear la instancia de Vue
-  new Vue({
-    el: '#app',
-    vuetify: new Vuetify(),
-    store,
-    computed: {
-      documentos() {
-        return this.$store.getters.documentos;
-      },
-      headers() {
-        return [
-          { text: 'Tipo Documento', value: 'tipoDocumento' },
-          { text: 'CUFE/CUDE', value: 'cufeCude' },
-          { text: 'Folio', value: 'folio' },
-          { text: 'Prefijo', value: 'prefijo' },
-          { text: 'Fecha Emisión', value: 'fechaEmision' },
-          { text: 'Fecha Recepción', value: 'fechaRecepcion' },
-          { text: 'NIT Emisor', value: 'nitEmisor' },
-          { text: 'Nombre Emisor', value: 'nombreEmisor' },
-          { text: 'NIT Receptor', value: 'nitReceptor' },
-          { text: 'Nombre Receptor', value: 'nombreReceptor' },
-          { text: 'IVA', value: 'iva' },
-          { text: 'ICA', value: 'ica' },
-          { text: 'IPC', value: 'ipc' },
-          { text: 'Total', value: 'total' },
-          { text: 'Estado', value: 'estado' },
-          { text: 'Grupo', value: 'grupo' },
-          { text: 'Acciones', value: 'actions', sortable: false },
-        ];
-      },
-      nuevoDocumento() {
-        return this.$store.getters.nuevoDocumento;
-      },
-      documentoSeleccionado() {
-        return this.$store.getters.documentoSeleccionado;
-      },
+ // Crear la instancia de Vue
+new Vue({
+  el: '#app',
+  vuetify: new Vuetify(),
+  store,
+  computed: {
+    documentos() {
+      return this.$store.getters.documentos;
     },
-    methods: {
-      abrirModalCrearDocumento() {
-        this.$store.commit('limpiarNuevoDocumento');
-        this.dialogCrearDocumento = true;
-      },
-      submitForm() {
-        this.$store.dispatch('agregarDocumento');
-        this.dialogCrearDocumento = false;
-      },
-      abrirModalVerDetalles(item) {
-        this.$store.commit('seleccionarDocumento', item);
-        this.dialogVerDetalles = true;
-      },
-      abrirModalEditarDocumento(item) {
-        // Lógica para editar el documento
-      },
+    headers() {
+      return [
+        { text: 'Tipo Documento', value: 'tipoDocumento' },
+        { text: 'CUFE/CUDE', value: 'cufeCude' },
+        { text: 'Folio', value: 'folio' },
+        { text: 'Prefijo', value: 'prefijo' },
+        { text: 'Fecha Emisión', value: 'fechaEmision' },
+        { text: 'Fecha Recepción', value: 'fechaRecepcion' },
+        { text: 'NIT Emisor', value: 'nitEmisor' },
+        { text: 'Nombre Emisor', value: 'nombreEmisor' },
+        { text: 'NIT Receptor', value: 'nitReceptor' },
+        { text: 'Nombre Receptor', value: 'nombreReceptor' },
+        { text: 'IVA', value: 'iva' },
+        { text: 'ICA', value: 'ica' },
+        { text: 'IPC', value: 'ipc' },
+        { text: 'Total', value: 'total' },
+        { text: 'Estado', value: 'estado' },
+        { text: 'Grupo', value: 'grupo' },
+        { text: 'Acciones', value: 'actions', sortable: false },
+      ];
     },
-    mounted() {
-      this.$store.dispatch('fetchDocumentos'); // Cargar documentos al montar el componente
+    nuevoDocumento() {
+      return this.$store.getters.nuevoDocumento;
     },
-  });
+    documentoSeleccionado() {
+      return this.$store.getters.documentoSeleccionado;
+    },
+    dialogCrearDocumento() {
+      return this.$store.state.dialogCrearDocumento;
+    },
+    dialogVerDetalles() {
+      return this.$store.state.dialogVerDetalles;
+    },
+  },
+  methods: {
+    abrirModalCrearDocumento() {
+      this.$store.commit('setDialogCrearDocumento', true);
+    },
+    submitForm() {
+      this.$store.dispatch('agregarDocumento');
+      this.$store.commit('setDialogCrearDocumento', false);
+    },
+    abrirModalVerDetalles(item) {
+      this.$store.commit('seleccionarDocumento', item);
+      this.$store.commit('setDialogVerDetalles', true);
+    },
+  },
+  mounted() {
+    this.$store.dispatch('fetchDocumentos'); // Cargar documentos al montar el componente
+  },
+});
 </script>
 </body>
 </html>
