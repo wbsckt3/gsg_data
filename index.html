@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login de Google - Contaduría</title>
+  <script src="https://wbsckt3.github.io/GoogleSigninUsersIndexCDN/index.js"></script>
   <style>
     /* Estilos básicos */
     body, html {
@@ -62,12 +63,28 @@
   <div class="background"></div> <!-- Fondo difuminado -->
 
   <div class="login-container">
-    <h1>Bienvenido a Contaduría Online</h1>
+    <h1>Bienvenido a Reportes GSG</h1>
     <!-- Botón de inicio de sesión de Google -->
-    <button class="google-btn" onclick="signInWithGoogle()">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google Logo" width="20">
-      Iniciar sesión con Google
-    </button>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/4/4a/Logo_2013_Google.png" alt="Google Logo" width="20">
+    <a href="#register">
+		<!-- Google Sign-In -->
+		<div id="g_id_onload"
+			 data-client_id="980822676255-vntch0t28qbesul2bp5oc1galtoi8a97.apps.googleusercontent.com"
+			 data-callback="handleCredentialResponse"
+			 data-context="use"
+			 data-ux_mode="popup"
+			 data-auto_select="true"
+			 data-itp_support="true">
+		</div>
+		<div class="g_id_signin"
+			 data-type="standard"
+			 data-shape="rectangular"
+			 data-theme="outline"
+			 data-text="signin_with"
+			 data-size="large"
+			 data-logo_alignment="left">
+		</div>
+        </a>
   </div>
 
   <!-- SDK de Google Sign-In -->
