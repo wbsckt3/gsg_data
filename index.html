@@ -30,11 +30,9 @@
         class="elevation-1"
       >
         <template v-slot:item.actions="{ item }">
-          <!-- Botón para ver detalles del documento -->
           <v-btn text icon color="blue" @click="abrirModalVerDetalles(item)">
             <v-icon>info</v-icon>
           </v-btn>
-          <!-- Botón para editar el documento -->
           <v-btn text icon color="green" @click="abrirModalEditarDocumento(item)">
             <v-icon>edit</v-icon>
           </v-btn>
@@ -50,11 +48,9 @@
           <v-card-text>
             <v-form>
               <v-row>
-                <!-- Campos de entrada para los datos del documento -->
                 <v-col cols="12" md="3">
                   <v-text-field label="Tipo Documento" v-model="nuevoDocumento.tipoDocumento"></v-text-field>
                 </v-col>
-                <!-- Añadir más campos según se necesite -->
               </v-row>
             </v-form>
           </v-card-text>
@@ -75,7 +71,6 @@
           <v-card-text>
             <div v-if="documentoSeleccionado">
               <p><strong>Tipo Documento:</strong> {{ documentoSeleccionado.tipoDocumento }}</p>
-              <!-- Muestra más detalles aquí -->
             </div>
           </v-card-text>
           <v-card-actions>
@@ -84,62 +79,25 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
-
     </v-container>
   </v-app>
 </div>
 
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/vuetify@2.5.10/dist/vuetify.js"></script>
 <script>
   // Configuración de Vuex Store
   const store = new Vuex.Store({
     state: {
-      documentos: [
-        // Ejemplo de documento inicial
-        {
-          tipoDocumento: 'Factura',
-          cufeCude: 'CUFE123456789',
-          folio: '12345',
-          prefijo: 'F',
-          fechaEmision: '2024-01-01',
-          fechaRecepcion: '2024-01-02',
-          nitEmisor: '123456789',
-          nombreEmisor: 'Empresa S.A.S.',
-          nitReceptor: '987654321',
-          nombreReceptor: 'Cliente S.A.S.',
-          iva: 19,
-          ica: 5,
-          ipc: 3,
-          total: 100000,
-          estado: 'Pendiente',
-          grupo: 'Grupo A'
-        },
-        // Más documentos si es necesario
-      ],
-      nuevoDocumento: {
-        tipoDocumento: '',
-        cufeCude: '',
-        folio: '',
-        prefijo: '',
-        fechaEmision: '',
-        fechaRecepcion: '',
-        nitEmisor: '',
-        nombreEmisor: '',
-        nitReceptor: '',
-        nombreReceptor: '',
-        iva: 0,
-        ica: 0,
-        ipc: 0,
-        total: 0,
-        estado: '',
-        grupo: ''
-      },
+      documentos: [],
+      nuevoDocumento: { /*... propiedades del documento ...*/ },
       documentoSeleccionado: null,
       dialogCrearDocumento: false,
       dialogVerDetalles: false,
     },
     mutations: {
+      setDocumentos(state, documentos) {
+        state.documentos = documentos;
+      },
       agregarDocumento(state, documento) {
         state.documentos.push(documento);
       },
@@ -153,6 +111,23 @@
       }
     },
     actions: {
+      async fetchDocumentos({ commit }) {
+        try {
+          const response = await fetch('http://www.refactorii.com/getDocumentosData', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            commit('setDocumentos', data.documentos);
+          } else {
+            console.error("Error en la solicitud:", await response.json().message);
+          }
+        } catch (error) {
+          console.error("Error al hacer fetch de los documentos:", error);
+        }
+      },
       agregarDocumento({ commit, state }) {
         commit('agregarDocumento', { ...state.nuevoDocumento });
         commit('limpiarNuevoDocumento');
@@ -216,43 +191,12 @@
         this.dialogVerDetalles = true;
       },
       abrirModalEditarDocumento(item) {
-        // Aquí puedes implementar la lógica para editar el documento
+        // Lógica para editar el documento
       },
-
-       async fetchDocumentosData() {
-            try {
-              const response = await fetch('http://localhost:3000/getDocumentosData', { 
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-              });
-      
-              if (!response.ok) {
-                const errorData = await response.json();
-                console.error("Error en la solicitud:", errorData.message);
-                return;
-              }
-      
-              const data = await response.json();
-              console.log("Documentos obtenidos:", data.documentos);
-              this.documentos = data.documentos; // Asigna los documentos a la data del componente
-              
-            } catch (error) {
-              console.error("Error al hacer fetch de los documentos:", error);
-            }
-          }
-      
     },
-    mounted(){
-      this.fetchDocumentosData(); // Llama al método al montar el componente
+    mounted() {
+      this.$store.dispatch('fetchDocumentos'); // Cargar documentos al montar el componente
     },
-    data() {
-        return {
-          documentos: [] // Aquí se almacenarán los documentos obtenidos desde el backend
-        };
-      }
-      },
   });
 </script>
 </body>
