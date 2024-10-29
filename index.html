@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyecto Vue con Vuex</title>
+  <!-- Vuetify CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.5.10/dist/vuetify.min.css" rel="stylesheet">
+  <!-- Vue CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+  <!-- Vuex CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vuex@3.6.2/dist/vuex.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+  <v-app>
+    <v-container>
+      <v-toolbar flat>
+        <v-toolbar-title>Auditoría de Documentos</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" @click="abrirModalCrearDocumento" dark>Crear Documento</v-btn>
+      </v-toolbar>
+
+      <!-- Tabla de Documentos -->
+      <v-data-table
+        :headers="headers"
+        :items="documentos"
+        item-value="folio"
+        class="elevation-1"
+      >
+        <template v-slot:item.actions="{ item }">
+          <v-btn text icon color="blue" @click="abrirModalVerDetalles(item)">
+            <v-icon>info</v-icon>
+          </v-btn>
+          <v-btn text icon color="green" @click="abrirModalEditarDocumento(item)">
+            <v-icon>edit</v-icon>
+          </v-btn>
+        </template>
+      </v-data-table>
+
+      <!-- Modal Crear Documento -->
+      <v-dialog v-model="dialogCrearDocumento" max-width="800px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Crear Documento</span>
+          </v-card-title>
+          <v-card-text>
+            <v-form>
+              <v-row>
+                <v-col cols="12" md="3">
+                  <v-text-field label="Tipo Documento" v-model="nuevoDocumento.tipoDocumento"></v-text-field>
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="dialogCrearDocumento = false">Cancelar</v-btn>
+            <v-btn color="blue darken-1" text @click="submitForm">Guardar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Modal Ver Detalles -->
+      <v-dialog v-model="dialogVerDetalles" max-width="600px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">Detalles del Documento</span>
+          </v-card-title>
+          <v-card-text>
+            <div v-if="documentoSeleccionado">
+              <p><strong>Tipo Documento:</strong> {{ documentoSeleccionado.tipoDocumento }}</p>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="dialogVerDetalles = false">Cerrar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-container>
+  </v-app>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.5.10/dist/vuetify.js"></script>
+<script>
+ // Configuración de Vuex Store
+const store = new Vuex.Store({
+  state: {
+    documentos: [],
+    nuevoDocumento: { /*... propiedades del documento ...*/ },
+    documentoSeleccionado: null,
+    dialogCrearDocumento: false,
+    dialogVerDetalles: false,
+  },
+  mutations: {
+    setDocumentos(state, documentos) {
+      state.documentos = documentos;
+    },
+    agregarDocumento(state, documento) {
+      state.documentos.push(documento);
+    },
+    seleccionarDocumento(state, documento) {
+      state.documentoSeleccionado = documento;
+    },
+    limpiarNuevoDocumento(state) {
+      Object.keys(state.nuevoDocumento).forEach(key => {
+        state.nuevoDocumento[key] = '';
+      });
+    }
+  },
+  actions: {
+    async fetchDocumentos({ commit }) {
+      try {
+        const response = await fetch('https://www.refactorii.com/getDocumentosData', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          commit('setDocumentos', data.documentos);
+        } else {
+          console.error("Error en la solicitud:", await response.json().message);
+        }
+      } catch (error) {
+        console.error("Error al hacer fetch de los documentos:", error);
+      }
+    },
+    agregarDocumento({ commit, state }) {
+      commit('agregarDocumento', { ...state.nuevoDocumento });
+      commit('limpiarNuevoDocumento');
+    }
+  },
+  getters: {
+    documentos: state => state.documentos,
+    nuevoDocumento: state => state.nuevoDocumento,
+    documentoSeleccionado: state => state.documentoSeleccionado,
+  }
+});
+  
+  // Crear la instancia de Vue
+  new Vue({
+    el: '#app',
+    vuetify: new Vuetify(),
+    store,
+    computed: {
+      documentos() {
+        return this.$store.getters.documentos;
+      },
+      headers() {
+        return [
+          { text: 'Tipo Documento', value: 'tipoDocumento' },
+          { text: 'CUFE/CUDE', value: 'cufeCude' },
+          { text: 'Folio', value: 'folio' },
+          { text: 'Prefijo', value: 'prefijo' },
+          { text: 'Fecha Emisión', value: 'fechaEmision' },
+          { text: 'Fecha Recepción', value: 'fechaRecepcion' },
+          { text: 'NIT Emisor', value: 'nitEmisor' },
+          { text: 'Nombre Emisor', value: 'nombreEmisor' },
+          { text: 'NIT Receptor', value: 'nitReceptor' },
+          { text: 'Nombre Receptor', value: 'nombreReceptor' },
+          { text: 'IVA', value: 'iva' },
+          { text: 'ICA', value: 'ica' },
+          { text: 'IPC', value: 'ipc' },
+          { text: 'Total', value: 'total' },
+          { text: 'Estado', value: 'estado' },
+          { text: 'Grupo', value: 'grupo' },
+          { text: 'Acciones', value: 'actions', sortable: false },
+        ];
+      },
+      nuevoDocumento() {
+        return this.$store.getters.nuevoDocumento;
+      },
+      documentoSeleccionado() {
+        return this.$store.getters.documentoSeleccionado;
+      },
+    },
+    methods: {
+      abrirModalCrearDocumento() {
+        this.$store.commit('limpiarNuevoDocumento');
+        this.dialogCrearDocumento = true;
+      },
+      submitForm() {
+        this.$store.dispatch('agregarDocumento');
+        this.dialogCrearDocumento = false;
+      },
+      abrirModalVerDetalles(item) {
+        this.$store.commit('seleccionarDocumento', item);
+        this.dialogVerDetalles = true;
+      },
+      abrirModalEditarDocumento(item) {
+        // Lógica para editar el documento
+      },
+    },
+    mounted() {
+      this.$store.dispatch('fetchDocumentos'); // Cargar documentos al montar el componente
+    },
+  });
+</script>
+</body>
+</html>
