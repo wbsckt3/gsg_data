@@ -1,103 +1,181 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentos desde MongoDB</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        table {
-            width: 80%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #333;
-            color: white;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyecto Vue con Vuex</title>
+  <!-- Vuetify CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.5.10/dist/vuetify.min.css" rel="stylesheet">
+  <!-- Vue CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+  <!-- Vuex CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vuex@3.6.2/dist/vuex.js"></script>
+  <!-- Axios CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
 
-    <h1>Lista de Documentos</h1>
-    <div id="message"></div>
-    <table id="documentos-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Fecha</th>
-            </tr>
-        </thead>
-        <tbody id="documentos-body">
-            <!-- Aquí se insertarán los datos de los documentos -->
-        </tbody>
-    </table>
+<div id="app">
+  <v-app>
+    <v-container>
+      <v-toolbar flat>
+        <v-toolbar-title>Auditoría de pacientes</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" @click="abrirModalCrearAuditoria" dark>Crear Auditoría de paciente</v-btn>
+      </v-toolbar>
 
-    <script>
-        async function fetchDocumentos() {
-            try {
-                const response = await fetch('http://www.refactorii.com/getDocumentosData'); // Cambia el puerto si es necesario
-                if (!response.ok) {
-                    throw new Error(`Error al obtener datos: ${response.status}`);
-                }
-                const data = await response.json();
+      <!-- Tabla de Auditoría de pacientes -->
+      <v-data-table
+        :headers="headers"
+        :items="auditoriaPacientes"
+        item-value="name"
+        class="elevation-1"
+      >
+        <template v-slot:item.actions="{ item }">
+          <!-- Botón para agregar observación -->
+          <v-btn text icon color="green" @click="abrirModalCrearObservacion(item)">
+            <v-icon>post_add</v-icon>
+          </v-btn>
+          <!-- Botón para ver observaciones -->
+          <v-btn text icon color="blue" @click="abrirModalVerObservaciones(item)">
+            <v-icon>note_add</v-icon>
+          </v-btn>
+          <!-- Botón para cerrar auditoría, deshabilitado si el estado es 2 -->
+          <v-btn text icon color="red" @click="abrirModalCerrarAuditoria(item)" :disabled="item.estado === 2">
+            <v-icon>check</v-icon>
+          </v-btn>
+        </template>
+      </v-data-table>
 
-                if (data.documentos && data.documentos.length > 0) {
-                    populateTable(data.documentos);
-                } else {
-                    document.getElementById('message').innerText = 'No se encontraron documentos.';
-                }
-            } catch (error) {
-                console.error("Error al obtener documentos:", error);
-                document.getElementById('message').innerText = 'Error al obtener documentos. Consulte la consola para más detalles.';
-            }
+      <!-- Modales para Crear Auditoría, Ver Observaciones, Crear Observación y Cerrar Auditoría -->
+      <!-- Aquí se incluyen los modales según el diseño que compartiste antes -->
+
+    </v-container>
+  </v-app>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/vuetify@2.5.10/dist/vuetify.js"></script>
+<script>
+  // Configuración de Vuex Store
+  const store = new Vuex.Store({
+    state: {
+      auditoriaPacientes: [], // Almacenará los datos obtenidos desde el endpoint
+      nuevoPaciente: {
+        numeroDocumento: '',
+        tipoDocumento: ''
+      }
+    },
+    mutations: {
+      SET_AUDITORIA_PACIENTES(state, pacientes) {
+        state.auditoriaPacientes = pacientes;
+      },
+      CREAR_AUDITORIA(state, paciente) {
+        state.auditoriaPacientes.push(paciente);
+      }
+    },
+    actions: {
+      async fetchAuditoriaPacientes({ commit }) {
+        try {
+          const response = await axios.post('/getDocumentosData');
+          const pacientes = response.data.documentos.map(doc => ({
+            numeroDocumento: doc.cufeCude,
+            tipoDocumento: doc.tipoDocumento,
+            nombresApellidos: `${doc.nombreEmisor} ${doc.nombreReceptor}`,
+            sexo: '', // Ajusta este y otros campos según sea necesario
+            edad: '', // Si hay datos adicionales para calcular la edad, los puedes incluir aquí
+            municipioResidencia: '',
+            cohorte: doc.grupo,
+            ipsAsignada: doc.nombreReceptor
+          }));
+          commit('SET_AUDITORIA_PACIENTES', pacientes);
+        } catch (error) {
+          console.error('Error al obtener datos:', error);
         }
+      },
+      crearAuditoria({ commit, state }) {
+        commit('CREAR_AUDITORIA', { ...state.nuevoPaciente });
+        state.nuevoPaciente.numeroDocumento = '';
+        state.nuevoPaciente.tipoDocumento = '';
+      }
+    },
+    getters: {
+      auditoriaPacientes: (state) => state.auditoriaPacientes,
+      nuevoPaciente: (state) => state.nuevoPaciente
+    }
+  });
 
-        function populateTable(documentos) {
-            const tableBody = document.getElementById('documentos-body');
-            tableBody.innerHTML = ''; // Limpia cualquier contenido previo
+  // Inicialización de Vue con Vuex y Vuetify
+  new Vue({
+    el: '#app',
+    vuetify: new Vuetify(),
+    store, // Vuex Store
+    computed: {
+      auditoriaPacientes() {
+        return this.$store.getters.auditoriaPacientes;
+      },
+      nuevoPaciente() {
+        return this.$store.state.nuevoPaciente;
+      }
+    },
+    data() {
+      return {
+        dialogCrearAuditoria: false,
+        dialogVerObservaciones: false,
+        dialogCerrarAuditoria: false,
+        dialogCrearObservacion: false,
+        pacienteSeleccionado: null,
+        nuevaObservacion: '',
+        headers: [
+          { text: 'Número Documento', value: 'numeroDocumento' },
+          { text: 'Tipo Documento', value: 'tipoDocumento' },
+          { text: 'Nombres y Apellidos', value: 'nombresApellidos' },
+          { text: 'Sexo', value: 'sexo' },
+          { text: 'Edad', value: 'edad' },
+          { text: 'Municipio Residencia', value: 'municipioResidencia' },
+          { text: 'Cohorte', value: 'cohorte' },
+          { text: 'IPS Asignada', value: 'ipsAsignada' },
+          { text: 'Acciones', value: 'actions', sortable: false },
+        ]
+      };
+    },
+    methods: {
+      abrirModalCrearAuditoria() {
+        this.dialogCrearAuditoria = true;
+      },
+      submitForm() {
+        this.$store.dispatch('crearAuditoria');
+        this.dialogCrearAuditoria = false;
+      },
+      abrirModalCrearObservacion(item) {
+        this.pacienteSeleccionado = item;
+        this.dialogCrearObservacion = true;
+      },
+      agregarObservacion() {
+        console.log('Agregando observación:', this.nuevaObservacion, 'para el paciente', this.pacienteSeleccionado);
+        this.nuevaObservacion = '';
+        this.dialogCrearObservacion = false;
+      },
+      abrirModalVerObservaciones(item) {
+        this.pacienteSeleccionado = item;
+        this.dialogVerObservaciones = true;
+      },
+      abrirModalCerrarAuditoria(item) {
+        this.pacienteSeleccionado = item;
+        this.dialogCerrarAuditoria = true;
+      },
+      cerrarAuditoria() {
+        console.log('Cerrando auditoría para:', this.pacienteSeleccionado);
+        this.dialogCerrarAuditoria = false;
+      }
+    },
+    created() {
+      // Cargar los datos desde el endpoint al iniciar la app
+      this.$store.dispatch('fetchAuditoriaPacientes');
+    }
+  });
+</script>
 
-            documentos.forEach(doc => {
-                const row = document.createElement('tr');
-                
-                // Crear una celda para cada campo
-                const idCell = document.createElement('td');
-                idCell.innerText = doc._id;
-                row.appendChild(idCell);
-
-                const nameCell = document.createElement('td');
-                nameCell.innerText = doc.nombre || 'N/A'; // Reemplaza con el nombre del campo en tu modelo
-                row.appendChild(nameCell);
-
-                const descCell = document.createElement('td');
-                descCell.innerText = doc.descripcion || 'N/A'; // Reemplaza con el nombre del campo en tu modelo
-                row.appendChild(descCell);
-
-                const dateCell = document.createElement('td');
-                dateCell.innerText = new Date(doc.fecha).toLocaleDateString() || 'N/A'; // Reemplaza con el campo de fecha en tu modelo
-                row.appendChild(dateCell);
-
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Llamar a la función para cargar los datos al cargar la página
-        window.onload = fetchDocumentos;
-    </script>
 </body>
 </html>
