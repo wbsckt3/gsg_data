@@ -11,6 +11,7 @@
   <!-- Vuex CDN -->
   <script src="https://cdn.jsdelivr.net/npm/vuex@3.6.2/dist/vuex.js"></script>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <div id="app">
@@ -83,7 +84,23 @@
   </v-app>
 </div>
 
+<template>
+  <div>
+    <!-- Botón para abrir el modal -->
+    <button @click="openModal">Ver gráfica</button>
+
+    <!-- Modal -->
+    <div v-if="showModal" class="modal">
+      <div class="modal-content">
+        <span class="close" @click="closeModal">&times;</span>
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+  </div>
+</template>
+  
 <script src="https://cdn.jsdelivr.net/npm/vuetify@2.5.10/dist/vuetify.js"></script>
+  
 <script>
 const store = new Vuex.Store({
   state: {
