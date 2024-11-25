@@ -116,17 +116,24 @@ const store = new Vuex.Store({
   actions: {
     async fetchDocumentos({ commit }) {
       try {
-        const response = await fetch('https://www.refactorii.com/getDocumentosData', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch('https://www.refactorii.com/getDocumentosData', { 
+          method: 'POST', // Usamos POST según lo indicado
+          headers: { 
+            'Content-Type': 'application/json' // Aseguramos el encabezado correcto
+          },
+          body: JSON.stringify({}) // Incluye el payload si se requiere, ajusta según sea necesario
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          commit('setDocumentos', data.documentos);
-        } else {
-          console.error("Error en la solicitud:", response.statusText);
+    
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+    
+        const data = await response.json(); // Parseamos la respuesta a JSON
+        if (!data.documentos) {
+          throw new Error("Formato de respuesta no válido. Campo 'documentos' no encontrado.");
+        }
+    
+        commit('setDocumentos', data.documentos);
       } catch (error) {
         console.error("Error al obtener los documentos:", error);
       }
